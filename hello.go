@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,7 +24,7 @@ func main() {
 		case 1:
 			iniciarMonitoramento()
 		case 2:
-			fmt.Println("Exibindo Logs...")
+			exibirLogs()
 		case 0:
 			fmt.Println("Saindo do programa")
 			os.Exit(0)
@@ -81,8 +82,10 @@ func testaSite(site string) {
 
 	if resp.StatusCode == 200 {
 		fmt.Println("Site:", site, "foi carregado com sucesso!")
+		registrarLog(site, true)
 	} else {
 		fmt.Println("Site:", site, "esta com problemas. Status Code:", resp.StatusCode)
+		registrarLog(site, false)
 	}
 }
 
@@ -93,4 +96,28 @@ func leSitesDoArquivo() []string {
 	}
 	sites := strings.Split(string(arquivo), "\r\n")
 	return sites
+}
+
+func registrarLog(site string, status bool) {
+	arquivo, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		fmt.Println(err)
+	}
+	defer arquivo.Close()
+
+	datahora := time.Now().Local().Format("02/01/2006 15:04:05")
+
+	arquivo.WriteString(datahora + " - " + site + " - online: " + strconv.FormatBool(status) + "\n")
+}
+
+func exibirLogs() {
+	fmt.Println("Exibindo Logs...")
+	arquivo, err := os.ReadFile("log.txt")
+	if err != nil {
+		fmt.Println(err)
+	}
+	logs := strings.Split(string(arquivo), "\r\n")
+	for _, log := range logs {
+		fmt.Println(log)
+	}
 }
